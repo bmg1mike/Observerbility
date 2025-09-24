@@ -5,6 +5,9 @@ using Scalar.AspNetCore;
 using Serilog;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Npgsql;
+using OpenTelemetry.Logs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +49,30 @@ builder.Services.AddOpenTelemetry()
             .AddAspNetCoreInstrumentation()
             .AddMeter(serviceName)
             .AddPrometheusExporter();
+    })
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddRedisInstrumentation()
+            .AddNpgsql();
+
+        tracing.AddOtlpExporter(x =>
+        {
+            // Configure for Jaeger all-in-one container
+            // x.Endpoint = new Uri("http://localhost:14268/api/traces");
+            x.Endpoint = new Uri("http://localhost:4317");
+        });
+    });
+
+    builder.Logging.AddOpenTelemetry(logging =>
+    {
+        logging.IncludeScopes = true;
+        logging.IncludeFormattedMessage = true;
+
+        logging.AddOtlpExporter();
     });
 
 var app = builder.Build();
