@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Todos.Api.Data;
 using Todos.Api.Repositories;
-using Todos.Api.Observability;
 
 namespace Todos.Api.Controllers;
 
@@ -47,7 +46,6 @@ public class TodosController : ControllerBase
         };
         await _uow.Todos.AddAsync(item, cancellationToken);
         await _uow.SaveChangesAsync(cancellationToken);
-        TodoMetrics.TodosCreated.Add(1);
 
         return CreatedAtAction(nameof(GetById), new { id = item.Id }, item);
     }
@@ -78,7 +76,6 @@ public class TodosController : ControllerBase
 
         _uow.Todos.Update(existing);
         await _uow.SaveChangesAsync(cancellationToken);
-        TodoMetrics.TodosUpdated.Add(1);
 
         return Ok(existing);
     }
@@ -91,7 +88,6 @@ public class TodosController : ControllerBase
 
         _uow.Todos.Remove(existing);
         await _uow.SaveChangesAsync(cancellationToken);
-        TodoMetrics.TodosDeleted.Add(1);
         return NoContent();
     }
 }
